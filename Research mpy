@@ -1,0 +1,33 @@
+# Step 0. Importing relevant Langchain libraries
+from langchain.adapters.openai import convert_openai_messages
+from langchain_community.chat_models import ChatOpenAI
+
+# Step 1. Instantiating your TavilyClient
+from tavily import TavilyClient
+client = TavilyClient(api_key="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")
+
+# Step 2. Define the search query and execute it
+search_query = "What happened in the latest burning man floods?"  # Define the search query
+content = client.search(search_query, search_depth="advanced")["results"]
+
+# Step 3. Define the query for the report and set up the OpenAI prompts
+query = search_query  # Use the same query or modify as needed
+prompt = [{
+    "role": "system",
+    "content":  f'You are an AI critical thinker research assistant. '\
+                f'Your sole purpose is to write well written, critically acclaimed,'\
+                f'objective and structured reports on given text.'
+}, {
+    "role": "user",
+    "content": f'Information: """{content}"""\n\n' \
+               f'Using the above information, answer the following'\
+               f'query: "{query}" in a detailed report --'\
+               f'Please use MLA format and markdown syntax.'
+}]
+
+# Step 4. Running OpenAI through Langchain
+lc_messages = convert_openai_messages(prompt)
+report = ChatOpenAI(model='gpt-3.5-turbo', openai_api_key="sk-proj-FGvkF3TW08GqN2AzJkyrT3BlbkFJJdYvoZjFQLLMWclJLHJP").invoke(lc_messages).content
+
+# Step 5. Output the research report
+print(report)
