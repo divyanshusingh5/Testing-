@@ -1,61 +1,89 @@
 import requests
 import json
+import streamlit as st
+import openai
+import pandas as pd
 
-# Replace with your Tavily API key
+# Replace with your Tavily API key and OpenAI API key
 tavily_api_key = "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"
+openai_api_key = "sk-proj-aZAeAMuYy1bypDk3PMxGT3BlbkFJeQ3gP4AkWD5su0AnvPnM"
+
+# Setting the OpenAI API key
+openai.api_key = openai_api_key
+
 tavily_url = "https://api.tavily.com/search"
 
 def get_tavily_search_results(url):
-    # Create the payload for the Tavily API request
     payload = json.dumps({
         "api_key": tavily_api_key,
         "query": f"site:{url}",
         "search_depth": "advanced",
-        "include_raw_content": True,  # Request raw HTML content
-        "include_images": True,
-        "max_results": 5
+        "include_raw_content": True,
+        "include_images": False,
+        "max_results": 3,
+        "max_tokens":10000
     })
     
     headers = {'Content-Type': 'application/json'}
-    
-    # Send the POST request to the Tavily API
     response = requests.post(tavily_url, headers=headers, data=payload, verify=False)
     
-    try:
-        # Parse the response data into JSON
-        response_data = response.json()
-        return response_data
-    except requests.exceptions.JSONDecodeError as e:
-        print(f"Error decoding JSON: {e}")
-        print(f"Response content: {response.text}")
-        return None
+  
+    response_data = response.json()
+    return response_data
+   
 
-def analyze_html_content(raw_html):
-    # Perform analysis on the HTML content
-    # For this example, we will just print it out
-    # In a real use case, you might parse this HTML with BeautifulSoup, etc.
-    print("Extracted HTML Content:")
-    print(raw_html)
+
+def analyze_content_with_llm(contents):
+    prompt = (
+        "Generate a report comparing both the companies which can be used By designer to get more insights on User and what company want to potray "
+        f"{contents}\n\n"
+    )
+    
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "system", "content": prompt}]
+    )
+    
+    return response['choices'][0]['message']['content']
+
+def display_comparison_results(results):
+    st.subheader("Website Content Comparison")
+
+    # Display the results in a text area
+    st.text_area("Content Comparison", results, height=400)
 
 def main():
-    # Get the website URL from the user
-    url = input("Enter the website URL you want to analyze: ")
-    
-    # Fetch the search results from Tavily
-    result = get_tavily_search_results(url)
-    
-    if result and 'results' in result:
-        # Combine raw HTML content from all results
-        raw_content = " ".join([res.get('raw_content', '') for res in result['results']])
+    st.title("Website Content Comparison Tool")
+
+    url_inputs = st.text_area("Enter the website URLs you want to analyze (one per line)").splitlines()
+
+    if st.button("Analyze"):
+        all_content = {}
         
-        if raw_content:
-            # Analyze the raw HTML content
-            analyze_html_content(raw_content)
+        for url in url_inputs:
+            result = get_tavily_search_results(url)
+            
+            if result and 'results' in result:
+                combined_content = " ".join([res.get('raw_content') for res in result['results']])
+                print(combined_content)
+                if combined_content:
+                    all_content[url] = combined_content
+                else:
+                    st.warning(f"No content found in the search results for {url}.")
+            else:
+                st.error(f"Failed to retrieve data from Tavily for {url} or no results found.")
+        
+        if all_content:
+            contents_for_analysis = "\n\n".join([f"Website: {url}\nContent: {content}" for url, content in all_content.items()])
+            comparison_results = analyze_content_with_llm(contents_for_analysis)
+            display_comparison_results(comparison_results)
         else:
-            print("No HTML content found in the search results.")
-    else:
-        print("Failed to retrieve data from Tavily or no results found.")
+            st.warning("No valid content retrieved for analysis.")
+        
+    if st.button("Response"):
+        for url in url_inputs:
+             answer=get_tavily_search_results(url)
+             st.write(answer)
 
 if __name__ == "__main__":
     main()
-
