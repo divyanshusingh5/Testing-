@@ -5,8 +5,8 @@ import openai
 import pandas as pd
 
 # Replace with your Tavily API key and OpenAI API key
-tavily_api_key = "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"
-openai_api_key = "sk-proj-aZAeAMuYy1bypDk3PMxGT3BlbkFJeQ3gP4AkWD5su0AnvPnM"
+tavily_api_key = ""
+openai_api_key = ""
 
 # Setting the OpenAI API key
 openai.api_key = openai_api_key
@@ -101,8 +101,8 @@ import openai
 import pandas as pd
 
 # Replace with your Tavily API key and OpenAI API key
-tavily_api_key = "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"
-openai_api_key = "sk-proj-aZAeAMuYy1bypDk3PMxGT3BlbkFJeQ3gP4AkWD5su0AnvPnM"
+tavily_api_key = ""
+openai_api_key = ""
 
 # Setting the OpenAI API key
 openai.api_key = openai_api_key
